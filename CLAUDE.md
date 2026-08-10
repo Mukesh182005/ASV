@@ -16,22 +16,30 @@ jaw electrodes -> AD8232 -> ADS1115 (A0) -> ESP32 -> USB CSV -> Python -> model
 | Layer | Reality |
 |---|---|
 | Firmware (`firmware_arduino/`) | **Working and current.** 860 SPS, interrupt-paced, self-testing. |
-| Firmware (`firmware/`) | **Legacy PlatformIO. Do not edit.** Kept only as reference. |
-| Acquisition (`ml/acquisition/`) | Working; matches firmware v2 stream format. |
-| Datasets | **No valid data yet.** See "Dataset warning" below. |
-| ML pipeline (`ml/`) | Code exists, has never produced a trained model. `ml/outputs/` is empty. |
+| Acquisition (`ml/acquisition/`) | Working and tested; matches firmware v2 stream format. |
+| Tests (`tests/test_pipeline.py`) | 23/23 passing. Run them after touching `ml/`. |
+| Datasets | **Empty.** No valid recordings exist yet. |
+| ML pipeline (`ml/`) | Code exists, has never produced a trained model. `ml/models/` is empty. |
+| Backend (`backend/main.py`) | FastAPI inference server, code complete, **never run** — no model to serve. |
 | Frontend (`frontend/`) | Polished UI, **100% simulated** — mock BLE, `Math.random()` waveforms, hardcoded words. |
-| `README.md` (root) | **Aspirational.** Claims features that are not implemented. Trust `docs/CURRENT_SYSTEM_AUDIT.md` instead. |
 
 **Do not** describe this project as working end-to-end. It is at the "getting real
 signal off the hardware" stage.
 
 ### Dataset warning
 
-- `datasets/emg_dataset.csv`, `emg_features.csv` — synthetic Gaussian noise. Meaningless.
-- `datasets/ninapro_db1/` — real EMG, but **forearm/hand gestures**, not facial speech.
-  A model trained on it cannot generalize to jaw EMG. Do not build on it.
-- The only path forward is collecting real jaw-EMG with `ml/acquisition/collect_emg.py`.
+There is currently **no training data at all**. The synthetic CSVs and the NinaPro DB1
+dump were deleted during cleanup — NinaPro was forearm/hand gesture EMG, a domain that
+cannot transfer to jaw articulation, and the synthetic set was Gaussian noise.
+
+The only path forward is recording real jaw-EMG with `ml/acquisition/collect_emg.py`.
+Do not reintroduce either dataset.
+
+### Deleted — do not recreate
+
+`firmware/` (PlatformIO), `ml/legacy_experimental/`, `ml/run_pipeline.*`,
+`datasets/emg_dataset.csv`, `datasets/emg_features.csv`, and the PlatformIO-era docs.
+All recoverable from the first git commit if genuinely needed.
 
 ---
 

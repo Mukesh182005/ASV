@@ -1,5 +1,14 @@
 "use client"
 
+/**
+ * SIMULATED — HARDCODED DEVICE STATE
+ *
+ * batteryLevel, signalStrength and isConnected are fixed literals. The device is
+ * always 'connected' because isConnected is useState(true).
+ *
+ * To make real: drive these from the BLE status packet, which carries sample
+ * rate, dropped-sample count and AD8232 lead-off flags.
+ */
 import { motion } from "framer-motion"
 import { Bluetooth, Battery, Signal, Check, RefreshCw } from "lucide-react"
 import { Card } from "@/components/ui/card"

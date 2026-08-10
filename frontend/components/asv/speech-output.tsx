@@ -1,5 +1,13 @@
 "use client"
 
+/**
+ * SIMULATED — NO AUDIO IS PRODUCED
+ *
+ * Playback is a progress-bar timer. Nothing is spoken. The conversation history
+ * is a hardcoded array with fixed timestamps.
+ *
+ * To make real: call speechSynthesis.speak(new SpeechSynthesisUtterance(text)).
+ */
 import { motion } from "framer-motion"
 import { Volume2, Play, Pause, RotateCcw, ChevronLeft, Copy } from "lucide-react"
 import { Card } from "@/components/ui/card"

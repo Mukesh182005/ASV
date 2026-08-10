@@ -1,5 +1,13 @@
 "use client"
 
+/**
+ * SIMULATED — FABRICATED METRICS
+ *
+ * The accuracy, latency and sensor-count figures are invented placeholders. No
+ * model exists in this project yet, so no accuracy number can be real.
+ *
+ * To make real: source these from the backend once a model is trained.
+ */
 import { motion } from "framer-motion"
 import { 
   Activity, 

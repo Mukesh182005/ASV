@@ -1,5 +1,15 @@
 "use client"
 
+/**
+ * SIMULATED — NOT REAL EMG
+ *
+ * The waveform is Math.random(). The detected words are picked at random from a
+ * hardcoded array every few seconds. The confidence percentages are invented.
+ *
+ * To make real: subscribe to the BLE status characteristic
+ * (6e6b0002-b5a3-f393-e0a9-e50e24dcca9e) for live status, and POST sample
+ * windows to the backend /predict endpoint for classification.
+ */
 import { motion } from "framer-motion"
 import { Activity, Mic, Volume2, Settings } from "lucide-react"
 import { Card } from "@/components/ui/card"

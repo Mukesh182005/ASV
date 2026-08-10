@@ -1,5 +1,15 @@
 "use client"
 
+/**
+ * SIMULATED — NOT REAL BLUETOOTH
+ *
+ * Device discovery and connection are setTimeout animations over a hardcoded
+ * device list. There is no navigator.bluetooth call anywhere in this file.
+ *
+ * To make real: replace mockDevices + the setTimeout chain with
+ * navigator.bluetooth.requestDevice({ filters: [{ name: 'ASV-Device' }] }).
+ * Firmware service UUID: 6e6b0001-b5a3-f393-e0a9-e50e24dcca9e
+ */
 import { motion } from "framer-motion"
 import { Bluetooth, Battery, Signal, ChevronRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
