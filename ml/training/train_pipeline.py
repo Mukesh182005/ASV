@@ -17,7 +17,7 @@ import joblib
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.model_selection import GroupKFold, StratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 from sklearn.metrics import (
     accuracy_score, precision_recall_fscore_support,
     confusion_matrix, classification_report,
@@ -159,11 +159,11 @@ def train_and_evaluate(data_dir=None):
 
     n_splits = min(5, n_unique_groups)
     if n_splits < 2:
-        logger.warning("Only 1 group — using stratified split instead of GroupKFold.")
+        logger.warning("Only 1 group — using stratified split instead of StratifiedGroupKFold.")
         cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=settings.RANDOM_STATE)
         use_groups = False
     else:
-        cv = GroupKFold(n_splits=n_splits)
+        cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=settings.RANDOM_STATE)
         use_groups = True
 
     best_name, best_model, best_score = None, None, -1
@@ -242,7 +242,7 @@ def train_and_evaluate(data_dir=None):
         "best_model": best_name,
         "cv_accuracy": best_score,
         "cv_n_splits": n_splits,
-        "cv_method": "GroupKFold" if use_groups else "StratifiedKFold",
+        "cv_method": "StratifiedGroupKFold" if use_groups else "StratifiedKFold",
         "all_models": eval_results,
         "train_weighted_precision": round(prec, 4),
         "train_weighted_recall": round(rec, 4),

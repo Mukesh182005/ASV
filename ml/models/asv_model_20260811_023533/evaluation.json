@@ -1,0 +1,114 @@
+{
+  "best_model": "SVM",
+  "cv_accuracy": 0.22000000000000003,
+  "cv_n_splits": 5,
+  "cv_method": "StratifiedGroupKFold",
+  "all_models": {
+    "RandomForest": {
+      "cv_accuracy": 0.21714285714285717,
+      "fold_scores": [
+        0.2571,
+        0.2143,
+        0.2143,
+        0.2071,
+        0.1929
+      ]
+    },
+    "SVM": {
+      "cv_accuracy": 0.22000000000000003,
+      "fold_scores": [
+        0.2286,
+        0.2214,
+        0.2429,
+        0.1714,
+        0.2357
+      ]
+    }
+  },
+  "train_weighted_precision": 0.4181,
+  "train_weighted_recall": 0.4114,
+  "train_weighted_f1": 0.4077,
+  "confusion_matrix": [
+    [
+      42,
+      14,
+      31,
+      25,
+      28
+    ],
+    [
+      14,
+      48,
+      29,
+      19,
+      30
+    ],
+    [
+      14,
+      17,
+      63,
+      20,
+      26
+    ],
+    [
+      12,
+      14,
+      24,
+      61,
+      29
+    ],
+    [
+      13,
+      11,
+      18,
+      24,
+      74
+    ]
+  ],
+  "classification_report": {
+    "hello": {
+      "precision": 0.4421052631578947,
+      "recall": 0.3,
+      "f1-score": 0.3574468085106383,
+      "support": 140.0
+    },
+    "help": {
+      "precision": 0.46153846153846156,
+      "recall": 0.34285714285714286,
+      "f1-score": 0.39344262295081966,
+      "support": 140.0
+    },
+    "no": {
+      "precision": 0.38181818181818183,
+      "recall": 0.45,
+      "f1-score": 0.4131147540983607,
+      "support": 140.0
+    },
+    "rest": {
+      "precision": 0.40939597315436244,
+      "recall": 0.4357142857142857,
+      "f1-score": 0.42214532871972316,
+      "support": 140.0
+    },
+    "yes": {
+      "precision": 0.39572192513368987,
+      "recall": 0.5285714285714286,
+      "f1-score": 0.4525993883792049,
+      "support": 140.0
+    },
+    "accuracy": 0.4114285714285714,
+    "macro avg": {
+      "precision": 0.41811596096051806,
+      "recall": 0.41142857142857137,
+      "f1-score": 0.4077497805317494,
+      "support": 700.0
+    },
+    "weighted avg": {
+      "precision": 0.4181159609605181,
+      "recall": 0.4114285714285714,
+      "f1-score": 0.4077497805317493,
+      "support": 700.0
+    }
+  },
+  "note": "Metrics on full training data after cross-validation. Evaluate on held-out subjects for true generalization."
+}

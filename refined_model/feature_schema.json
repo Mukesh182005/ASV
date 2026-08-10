@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "feature_names": [
+    "rms",
+    "mav",
+    "wl",
+    "zcr",
+    "ssc",
+    "env_mean",
+    "env_max",
+    "env_std",
+    "env_peakiness",
+    "iemg",
+    "active_frac",
+    "active_dur_s",
+    "n_bursts",
+    "env_centroid",
+    "peak_time",
+    "env_skew",
+    "mean_freq",
+    "median_freq",
+    "spec_entropy"
+  ],
+  "n_features": 19
+}

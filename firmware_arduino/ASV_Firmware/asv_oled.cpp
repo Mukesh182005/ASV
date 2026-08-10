@@ -81,6 +81,30 @@ void asvOledMessage(const char *line1, const char *line2) {
   push();
 }
 
+void asvOledShowPrediction(const char *word) {
+  if (!g_ok || !g_enabled) return;
+  g_disp.clearDisplay();
+  
+  // Draw a double border box
+  g_disp.drawRect(0, 0, OLED_W, OLED_H, SSD1306_WHITE);
+  g_disp.drawRect(2, 2, OLED_W - 4, OLED_H - 4, SSD1306_WHITE);
+  
+  g_disp.setTextSize(1);
+  g_disp.setCursor(18, 10);
+  g_disp.print("DETECTED WORD:");
+  
+  // Center the word in size 2 font
+  // A size 2 character occupies 12 pixels of width (10px + 2px space)
+  int len = strlen(word);
+  int x = (OLED_W - (len * 12)) / 2;
+  if (x < 4) x = 4; // Prevent writing off-screen
+  g_disp.setTextSize(2);
+  g_disp.setCursor(x, 34);
+  g_disp.print(word);
+  
+  push();
+}
+
 void asvOledStatus(const AsvUiState &s) {
   if (!g_ok || !g_enabled) return;
 
@@ -133,6 +157,7 @@ bool asvOledBegin()      { return false; }
 bool asvOledPresent()    { return false; }
 void asvOledSplash()     {}
 void asvOledStatus(const AsvUiState &) {}
+void asvOledShowPrediction(const char *) {}
 void asvOledMessage(const char *, const char *) {}
 void asvOledSetEnabled(bool) {}
 bool asvOledEnabled()    { return false; }

@@ -1,0 +1,114 @@
+{
+  "best_model": "RandomForest",
+  "cv_accuracy": 0.47714285714285715,
+  "cv_n_splits": 5,
+  "cv_method": "StratifiedGroupKFold",
+  "all_models": {
+    "RandomForest": {
+      "cv_accuracy": 0.47714285714285715,
+      "fold_scores": [
+        0.55,
+        0.4071,
+        0.4643,
+        0.4929,
+        0.4714
+      ]
+    },
+    "SVM": {
+      "cv_accuracy": 0.37,
+      "fold_scores": [
+        0.3643,
+        0.3571,
+        0.4071,
+        0.3643,
+        0.3571
+      ]
+    }
+  },
+  "train_weighted_precision": 0.9986,
+  "train_weighted_recall": 0.9986,
+  "train_weighted_f1": 0.9986,
+  "confusion_matrix": [
+    [
+      140,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      140,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      139,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      140,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      140
+    ]
+  ],
+  "classification_report": {
+    "hello": {
+      "precision": 0.9929078014184397,
+      "recall": 1.0,
+      "f1-score": 0.99644128113879,
+      "support": 140.0
+    },
+    "help": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "no": {
+      "precision": 1.0,
+      "recall": 0.9928571428571429,
+      "f1-score": 0.996415770609319,
+      "support": 140.0
+    },
+    "rest": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "yes": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "accuracy": 0.9985714285714286,
+    "macro avg": {
+      "precision": 0.9985815602836879,
+      "recall": 0.9985714285714286,
+      "f1-score": 0.9985714103496217,
+      "support": 700.0
+    },
+    "weighted avg": {
+      "precision": 0.9985815602836878,
+      "recall": 0.9985714285714286,
+      "f1-score": 0.9985714103496218,
+      "support": 700.0
+    }
+  },
+  "note": "Metrics on full training data after cross-validation. Evaluate on held-out subjects for true generalization."
+}

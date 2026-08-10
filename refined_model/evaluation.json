@@ -1,0 +1,115 @@
+{
+  "best_model": "SVM_rbf",
+  "evaluation_method": "Leave-One-Recording-Out (out-of-fold) + Repeated 5-fold x10",
+  "loo_accuracy": 1.0,
+  "repeated5fold_mean": 1.0,
+  "repeated5fold_std": 0.0,
+  "all_models": {
+    "SVM_rbf": {
+      "loo_accuracy": 1.0,
+      "repeated5fold_mean": 1.0,
+      "repeated5fold_std": 0.0
+    },
+    "LDA": {
+      "loo_accuracy": 1.0,
+      "repeated5fold_mean": 1.0,
+      "repeated5fold_std": 0.0
+    },
+    "RandomForest": {
+      "loo_accuracy": 1.0,
+      "repeated5fold_mean": 1.0,
+      "repeated5fold_std": 0.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      10,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      10,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      10,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      10,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      10
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "hello",
+    "help",
+    "no",
+    "rest",
+    "yes"
+  ],
+  "classification_report": {
+    "hello": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10.0
+    },
+    "help": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10.0
+    },
+    "no": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10.0
+    },
+    "rest": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10.0
+    },
+    "yes": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 50.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 50.0
+    }
+  },
+  "chance_level": 0.2,
+  "note": "All metrics are out-of-fold. No sample was scored by a model that trained on it."
+}

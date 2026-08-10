@@ -8,3 +8,6 @@ datasets/ninapro_db1/
 datasets/custom_silent_speech/
 firmware/.pio/
 .pytest_cache/
+firmware_arduino/.build/
+*.csv
+*.png

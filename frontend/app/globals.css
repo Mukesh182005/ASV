@@ -4,95 +4,91 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Premium healthcare theme - soft white with emerald accents */
-  --background: oklch(0.985 0.002 240);
-  --foreground: oklch(0.15 0.01 240);
+  /* ASV — Google / Gemini theme.  Google Blue primary, Gemini gradient accents. */
+  --background: oklch(0.99 0.003 260);
+  --foreground: oklch(0.18 0.02 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.01 240);
+  --card-foreground: oklch(0.18 0.02 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.01 240);
-  --primary: oklch(0.65 0.17 165);
+  --popover-foreground: oklch(0.18 0.02 265);
+  --primary: oklch(0.62 0.19 258);          /* Google Blue #4285F4 */
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.005 240);
-  --secondary-foreground: oklch(0.20 0.01 240);
-  --muted: oklch(0.95 0.005 240);
-  --muted-foreground: oklch(0.50 0.01 240);
-  --accent: oklch(0.70 0.15 165);
+  --secondary: oklch(0.965 0.008 265);
+  --secondary-foreground: oklch(0.22 0.02 265);
+  --muted: oklch(0.955 0.008 265);
+  --muted-foreground: oklch(0.52 0.02 265);
+  --accent: oklch(0.62 0.20 300);           /* Gemini purple */
   --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.55 0.22 25);
+  --destructive: oklch(0.58 0.22 27);       /* Google Red */
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.90 0.005 240);
-  --input: oklch(0.92 0.005 240);
-  --ring: oklch(0.65 0.17 165);
-  --chart-1: oklch(0.65 0.17 165);
-  --chart-2: oklch(0.55 0.15 165);
-  --chart-3: oklch(0.70 0.12 165);
-  --chart-4: oklch(0.75 0.10 165);
-  --chart-5: oklch(0.60 0.14 165);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.15 0.01 240);
-  --sidebar-primary: oklch(0.65 0.17 165);
+  --border: oklch(0.91 0.006 265);
+  --input: oklch(0.93 0.006 265);
+  --ring: oklch(0.62 0.19 258);
+  --chart-1: oklch(0.62 0.19 258);          /* blue */
+  --chart-2: oklch(0.62 0.20 300);          /* purple */
+  --chart-3: oklch(0.65 0.19 12);           /* coral/pink */
+  --chart-4: oklch(0.80 0.16 85);           /* Google yellow */
+  --chart-5: oklch(0.68 0.16 155);          /* Google green */
+  --radius: 1rem;
+  --sidebar: oklch(0.99 0.003 260);
+  --sidebar-foreground: oklch(0.18 0.02 265);
+  --sidebar-primary: oklch(0.62 0.19 258);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.005 240);
-  --sidebar-accent-foreground: oklch(0.20 0.01 240);
-  --sidebar-border: oklch(0.92 0.005 240);
-  --sidebar-ring: oklch(0.65 0.17 165);
-  
-  /* Custom ASV theme colors */
-  --asv-emerald: oklch(0.65 0.17 165);
-  --asv-emerald-light: oklch(0.85 0.10 165);
-  --asv-emerald-dark: oklch(0.45 0.15 165);
-  --asv-slate: oklch(0.35 0.02 240);
-  --asv-slate-light: oklch(0.65 0.01 240);
+  --sidebar-accent: oklch(0.965 0.008 265);
+  --sidebar-accent-foreground: oklch(0.22 0.02 265);
+  --sidebar-border: oklch(0.93 0.006 265);
+  --sidebar-ring: oklch(0.62 0.19 258);
+
+  /* Gemini brand gradient — blue -> purple -> coral */
+  --gemini-blue: #4285f4;
+  --gemini-indigo: #7a68ee;
+  --gemini-purple: #9b72cb;
+  --gemini-pink: #d96570;
+  --gemini-gradient: linear-gradient(100deg, #4285f4 0%, #7a68ee 34%, #9b72cb 62%, #d96570 100%);
+  --gemini-gradient-soft: linear-gradient(100deg, rgba(66,133,244,0.16) 0%, rgba(155,114,203,0.16) 55%, rgba(217,101,112,0.16) 100%);
 }
 
 .dark {
-  /* Premium dark mode - matte black with emerald accents */
-  --background: oklch(0.12 0.01 240);
-  --foreground: oklch(0.96 0.005 240);
-  --card: oklch(0.16 0.01 240);
-  --card-foreground: oklch(0.96 0.005 240);
-  --popover: oklch(0.16 0.01 240);
-  --popover-foreground: oklch(0.96 0.005 240);
-  --primary: oklch(0.70 0.15 165);
-  --primary-foreground: oklch(0.12 0.01 240);
-  --secondary: oklch(0.22 0.01 240);
-  --secondary-foreground: oklch(0.96 0.005 240);
-  --muted: oklch(0.22 0.01 240);
-  --muted-foreground: oklch(0.65 0.01 240);
-  --accent: oklch(0.70 0.15 165);
-  --accent-foreground: oklch(0.12 0.01 240);
-  --destructive: oklch(0.45 0.18 25);
-  --destructive-foreground: oklch(0.96 0.005 240);
-  --border: oklch(0.25 0.01 240);
-  --input: oklch(0.22 0.01 240);
-  --ring: oklch(0.70 0.15 165);
-  --chart-1: oklch(0.70 0.15 165);
-  --chart-2: oklch(0.60 0.13 165);
-  --chart-3: oklch(0.75 0.10 165);
-  --chart-4: oklch(0.80 0.08 165);
-  --chart-5: oklch(0.65 0.12 165);
-  --sidebar: oklch(0.16 0.01 240);
-  --sidebar-foreground: oklch(0.96 0.005 240);
-  --sidebar-primary: oklch(0.70 0.15 165);
-  --sidebar-primary-foreground: oklch(0.12 0.01 240);
-  --sidebar-accent: oklch(0.22 0.01 240);
-  --sidebar-accent-foreground: oklch(0.96 0.005 240);
-  --sidebar-border: oklch(0.25 0.01 240);
-  --sidebar-ring: oklch(0.70 0.15 165);
-  
-  /* Custom ASV theme colors - dark mode */
-  --asv-emerald: oklch(0.70 0.15 165);
-  --asv-emerald-light: oklch(0.80 0.12 165);
-  --asv-emerald-dark: oklch(0.50 0.13 165);
-  --asv-slate: oklch(0.96 0.005 240);
-  --asv-slate-light: oklch(0.70 0.01 240);
+  /* Google dark — deep near-black with a cool blue cast */
+  --background: oklch(0.16 0.012 265);
+  --foreground: oklch(0.96 0.006 265);
+  --card: oklch(0.20 0.014 265);
+  --card-foreground: oklch(0.96 0.006 265);
+  --popover: oklch(0.20 0.014 265);
+  --popover-foreground: oklch(0.96 0.006 265);
+  --primary: oklch(0.72 0.16 256);          /* lighter Google blue for dark */
+  --primary-foreground: oklch(0.16 0.012 265);
+  --secondary: oklch(0.26 0.014 265);
+  --secondary-foreground: oklch(0.96 0.006 265);
+  --muted: oklch(0.26 0.014 265);
+  --muted-foreground: oklch(0.70 0.012 265);
+  --accent: oklch(0.70 0.17 300);
+  --accent-foreground: oklch(0.16 0.012 265);
+  --destructive: oklch(0.62 0.20 27);
+  --destructive-foreground: oklch(0.98 0.006 265);
+  --border: oklch(0.30 0.014 265);
+  --input: oklch(0.28 0.014 265);
+  --ring: oklch(0.72 0.16 256);
+  --chart-1: oklch(0.72 0.16 256);
+  --chart-2: oklch(0.70 0.17 300);
+  --chart-3: oklch(0.70 0.17 12);
+  --chart-4: oklch(0.82 0.15 85);
+  --chart-5: oklch(0.72 0.15 155);
+  --sidebar: oklch(0.20 0.014 265);
+  --sidebar-foreground: oklch(0.96 0.006 265);
+  --sidebar-primary: oklch(0.72 0.16 256);
+  --sidebar-primary-foreground: oklch(0.16 0.012 265);
+  --sidebar-accent: oklch(0.26 0.014 265);
+  --sidebar-accent-foreground: oklch(0.96 0.006 265);
+  --sidebar-border: oklch(0.30 0.014 265);
+  --sidebar-ring: oklch(0.72 0.16 256);
+
+  --gemini-gradient-soft: linear-gradient(100deg, rgba(66,133,244,0.22) 0%, rgba(155,114,203,0.22) 55%, rgba(217,101,112,0.22) 100%);
 }
 
 @theme inline {
-  --font-sans: 'Inter', 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: 'Google Sans', 'Product Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Geist Mono', 'SF Mono', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -129,13 +125,6 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
-  /* Custom ASV colors */
-  --color-asv-emerald: var(--asv-emerald);
-  --color-asv-emerald-light: var(--asv-emerald-light);
-  --color-asv-emerald-dark: var(--asv-emerald-dark);
-  --color-asv-slate: var(--asv-slate);
-  --color-asv-slate-light: var(--asv-slate-light);
 }
 
 @layer base {
@@ -144,5 +133,55 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'cv11', 'ss01';
   }
+}
+
+/* ---------------------------------------------------------------- *
+ *  Gemini gradient helpers
+ * ---------------------------------------------------------------- */
+@layer utilities {
+  .gemini-gradient {
+    background-image: var(--gemini-gradient);
+  }
+  .gemini-gradient-soft {
+    background-image: var(--gemini-gradient-soft);
+  }
+  /* gradient text (blue -> purple -> coral) */
+  .gemini-text {
+    background-image: var(--gemini-gradient);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: gemini-pan 6s ease infinite;
+  }
+  /* soft outer glow in Gemini colors */
+  .gemini-glow {
+    box-shadow:
+      0 0 0 1px rgba(122, 104, 238, 0.14),
+      0 10px 40px -10px rgba(66, 133, 244, 0.45),
+      0 8px 30px -12px rgba(217, 101, 112, 0.35);
+  }
+  /* animated gradient ring border */
+  .gemini-ring {
+    position: relative;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      var(--gemini-gradient) border-box;
+    border: 1.5px solid transparent;
+  }
+}
+
+@keyframes gemini-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes gemini-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes gemini-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; }
 }

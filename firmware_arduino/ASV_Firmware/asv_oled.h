@@ -24,6 +24,7 @@ bool asvOledBegin();
 bool asvOledPresent();
 void asvOledSplash();
 void asvOledStatus(const AsvUiState &s);
+void asvOledShowPrediction(const char *word);
 void asvOledMessage(const char *line1, const char *line2);
 void asvOledSetEnabled(bool on);
 bool asvOledEnabled();

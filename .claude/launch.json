@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "asv-frontend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "pushd \"C:\\Users\\Asus\\Downloads\\ASV-main\\ASV-main\\frontend\" && npm run dev"],
+      "port": 3000
+    }
+  ]
+}

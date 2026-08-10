@@ -34,6 +34,13 @@ static bool     g_streaming   = false;
 static bool     g_monitor     = false;
 static bool     g_adcOk       = false;
 
+// OLED word prediction show state
+static char     g_predictedWord[16] = "";
+static uint32_t g_predictionShowUntilMs = 0;
+static bool     g_readingWord = false;
+static char     g_serialBuf[32];
+static uint8_t  g_serialIdx = 0;
+
 static uint32_t g_lastUiMs    = 0;
 static uint32_t g_lastBleMs   = 0;
 static uint32_t g_lastMonMs   = 0;
@@ -264,7 +271,29 @@ void setup() {
 // ============================================================================
 void loop() {
   // ---- commands --------------------------------------------------------------
-  while (Serial.available()) handleCommand((char)Serial.read());
+  while (Serial.available()) {
+    char c = (char)Serial.read();
+    if (g_readingWord) {
+      if (c == '\n' || c == '\r') {
+        g_serialBuf[g_serialIdx] = '\0';
+        g_readingWord = false;
+        if (g_serialIdx > 0) {
+          strncpy(g_predictedWord, g_serialBuf, sizeof(g_predictedWord) - 1);
+          g_predictedWord[sizeof(g_predictedWord) - 1] = '\0';
+          g_predictionShowUntilMs = millis() + 2000; // Show for 2 seconds
+        }
+      } else if (g_serialIdx < sizeof(g_serialBuf) - 1) {
+        g_serialBuf[g_serialIdx++] = c;
+      }
+    } else {
+      if (c == 'w' || c == 'W') {
+        g_readingWord = true;
+        g_serialIdx = 0;
+      } else {
+        handleCommand(c);
+      }
+    }
+  }
   char bc = asvBleTakeCommand();
   if (bc) handleCommand(bc);
 
@@ -326,7 +355,15 @@ void loop() {
 
   // ---- OLED (second I2C bus - never blocks the ADC) --------------------------
 #if ASV_ENABLE_OLED
-  if (now - g_lastUiMs >= OLED_REFRESH_MS) {
+  if (now < g_predictionShowUntilMs) {
+    static uint32_t lastPredRenderMs = 0;
+    if (now - lastPredRenderMs >= 100) {
+      lastPredRenderMs = now;
+      asvOledShowPrediction(g_predictedWord);
+    }
+    // Force immediate status refresh once the prediction screen hides
+    g_lastUiMs = now - OLED_REFRESH_MS;
+  } else if (now - g_lastUiMs >= OLED_REFRESH_MS) {
     g_lastUiMs = now;
     AsvUiState ui;
     ui.ble_connected = asvBleConnected();
