@@ -26,7 +26,7 @@ except ImportError as e:
 
 # Add repo root to python path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from ml.refined.utterance_features import extract, FS_DEFAULT
+from ml.refined.utterance_features import extract, FS_DEFAULT, signal_health
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -52,6 +52,37 @@ def open_port(port, baud=921600):
         print("Make sure no other serial monitor (like plot_emg.py or Arduino IDE) is using it.")
         return None
 
+def countdown(seconds, message=""):
+    """Same 3-2-1 protocol used by collect_emg.py to build the training set.
+    Matching it here matters: EMG onset timing relative to a countdown cue is
+    part of what the model learned, so a different capture rhythm is a real
+    (if subtle) train/inference mismatch."""
+    for i in range(seconds, 0, -1):
+        print(f"  {message}{i}...", flush=True)
+        time.sleep(1)
+
+
+def read_baseline(conn, seconds=1.0):
+    """Read ~1s of idle stream to report signal health before trials start."""
+    samples = []
+    end_time = time.time() + seconds
+    while time.time() < end_time:
+        raw = conn.readline()
+        if not raw:
+            continue
+        line = raw.decode("utf-8", errors="replace").strip()
+        if not line or not line[0].isdigit():
+            continue
+        parts = line.split(",")
+        if len(parts) < 2:
+            continue
+        try:
+            samples.append(int(parts[1]))
+        except ValueError:
+            continue
+    return samples
+
+
 def capture_utterance(conn, seconds=2.0):
     samples = []
     # Send start stream command
@@ -69,8 +100,6 @@ def capture_utterance(conn, seconds=2.0):
             started = True
             break
 
-    print("  >>> RECORDING — Speak/Articulate Now! <<<", flush=True)
-    
     end_time = time.time() + seconds
     while time.time() < end_time:
         raw = conn.readline()
@@ -138,6 +167,18 @@ def main():
     conn = open_port(port)
     if not conn:
         sys.exit(1)
+    conn.write(b"s")
+
+    print("Checking electrode contact (1s idle read)...")
+    baseline_counts = read_baseline(conn, seconds=1.0)
+    health = signal_health(baseline_counts)
+    if health["status"] == "NO_DATA":
+        print("  [WARNING] No data received. Check the firmware self-test and port.")
+    else:
+        print(f"  baseline={health['baseline_mv']}mV  pp={health['pp_mv']}mV  -> {health['status']}")
+        if not health["ok"]:
+            print("  [WARNING] Signal looks unhealthy — expect ~1635mV baseline and >3mV pp.")
+            print("  Predictions below may be unreliable until this is fixed.")
 
     print("\n" + "="*50)
     print("  ASV Live Word Predictor (CLI)")
@@ -150,19 +191,29 @@ def main():
             if inp.lower() == 'q':
                 break
 
-            # Countdown
-            for i in range(3, 0, -1):
-                print(f"  Prepare in {i}...", end="\r", flush=True)
-                time.sleep(1)
-            print("  Ready!          ", end="\r", flush=True)
-            
+            # Same 3-2-1 countdown protocol used when the training set was
+            # collected (ml/acquisition/collect_emg.py) — matching it avoids a
+            # subtle train/inference timing mismatch.
+            countdown(3, "Prepare in ")
+            print("  >>> RECORDING — articulate now! <<<", flush=True)
+
             # Capture
             counts = capture_utterance(conn, seconds=args.seconds)
-            print(f"  Captured {len(counts)} samples.")
+            print(f"  Captured {len(counts)} samples (~{len(counts)/FS_DEFAULT:.2f}s, "
+                  f"expected ~{args.seconds:.1f}s).")
 
             if len(counts) < 32:
                 print("  [ERROR] Capture too short or empty! Check connections.")
                 continue
+            if len(counts) < 0.7 * args.seconds * FS_DEFAULT:
+                print("  [WARNING] Capture is shorter than expected — the serial link may be "
+                      "dropping data. The prediction below may default to 'rest'.")
+
+            cap_health = signal_health(counts)
+            if not cap_health["ok"]:
+                print(f"  [WARNING] {cap_health['status']} during capture "
+                      f"(baseline={cap_health['baseline_mv']}mV, pp={cap_health['pp_mv']}mV) "
+                      f"— check electrode contact.")
 
             # Classify
             x = extract(counts, fs=FS_DEFAULT).reshape(1, -1)

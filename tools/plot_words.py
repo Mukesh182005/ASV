@@ -1,25 +1,55 @@
 #!/usr/bin/env python3
 """ASV — Live Word Plotter & OLED Alert (GUI)
 ==============================================
-Plots the live EMG waveform in real time.
-Pressing the Spacebar records 2 seconds of EMG data, runs the SVM model,
-updates the Matplotlib GUI with the predicted word and class probabilities,
-and sends the word over serial to update the physical OLED screen.
+Plots the live EMG waveform in real time. Pressing the Spacebar captures an
+utterance, runs it through the refined model, updates the GUI with the
+predicted word and class probabilities, and sends the word over serial to
+the ESP32 OLED.
 
 Usage:
     python tools/plot_words.py --port COM8
+
+Keys:
+    SPACE   capture + classify (~2s, includes a pre-roll safety margin)
+    S       save the last capture as unverified data (NOT auto-trusted)
+    Q       quit
+
+--------------------------------------------------------------------------
+Why v2 (read this if predictions were stuck on "REST")
+--------------------------------------------------------------------------
+v1 parsed the serial port inside the matplotlib animation callback. If a
+render frame took longer than expected (a slow machine, a big legend
+redraw, etc.), the OS serial receive buffer could fill up while nobody was
+draining it, and the "2 seconds" of capture ended up holding far fewer real
+samples than that. A capture that's actually ~0.2-0.5s of real signal padded
+to look like 2s classifies as "rest" almost every time, at a confidence
+(~45-50%) that *looks* real but is barely above chance (20% for 5 classes) --
+this was reproduced offline: truncating a real "yes" recording to 0.24s of
+its own samples flips the model's answer to "rest" at 46% confidence.
+
+v2 fixes this by moving serial ingestion to a background thread with its own
+continuously-filled ring buffer (SerialStreamer below). The GUI just reads a
+snapshot of that buffer to draw; a slow frame can never cause a dropped
+sample. Capture windows are also sliced from that buffer, not accumulated
+only while "recording" -- this adds free pre-roll so a keypress made a beat
+late (or early) still gets the full utterance.
+
+It also adds a live signal-health readout (baseline / peak-to-peak), because
+the other realistic cause of "always rest" is bad electrode contact, not a
+software bug -- see docs/CURRENT_SYSTEM_AUDIT.md and the debugging plots
+from the first bring-up session (test.png, clench_test.png).
 """
 
 import argparse
 import sys
 import time
+import threading
 import collections
 import warnings
 import json
 from datetime import datetime
 from pathlib import Path
 
-# Suppress warnings
 warnings.filterwarnings("ignore")
 
 try:
@@ -34,383 +64,368 @@ except ImportError as e:
     print("Please run: pip install numpy joblib pyserial scikit-learn scipy matplotlib")
     sys.exit(1)
 
-# Add repo root to python path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from ml.refined.utterance_features import extract, preprocess, FS_DEFAULT, UV_PER_LSB
+from ml.refined.utterance_features import (
+    extract, FS_DEFAULT, UV_PER_LSB, signal_health,
+)
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 MODEL_DIR = REPO_ROOT / "refined_model"
 
-def save_trial_to_disk(recorded_counts, label):
-    # Target directory: datasets/custom_silent_speech/raw/S01/{label}/
-    label = label.lower()
-    subject = "S01"
-    trial_dir = REPO_ROOT / "datasets" / "custom_silent_speech" / "raw" / subject / label
-    trial_dir.mkdir(parents=True, exist_ok=True)
+PRE_ROLL_SEC = 0.4     # captured BEFORE the keypress (reaction-time safety margin)
+POST_ROLL_SEC = 1.6    # captured AFTER the keypress
+CAPTURE_SEC = PRE_ROLL_SEC + POST_ROLL_SEC   # ~2.0s total, matches training
 
-    # Find the next repetition number by looking at existing files
-    existing_reps = []
-    for csv in trial_dir.glob("rep*.csv"):
-        stem = csv.stem.split("_")[0]
-        rep_str = "".join(c for c in stem if c.isdigit())
-        if rep_str:
-            existing_reps.append(int(rep_str))
-    
-    rep_num = max(existing_reps) + 1 if existing_reps else 1
 
-    # Timestamps and filenames
-    ts_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    base_name = f"rep{rep_num:03d}_{ts_str}"
-    csv_path = trial_dir / f"{base_name}.csv"
-    meta_path = trial_dir / f"{base_name}_meta.json"
+# ============================================================================
+# Background serial reader — decoupled from the GUI so a slow render frame
+# can never starve the capture.
+# ============================================================================
+class SerialStreamer:
+    def __init__(self, ser, maxlen_seconds=8, fs=FS_DEFAULT):
+        self.ser = ser
+        self.buf = collections.deque(maxlen=int(fs * maxlen_seconds))  # (recv_t, ts_us, ch0)
+        self.lock = threading.Lock()
+        self.running = False
+        self.thread = None
+        self._rate_n = 0
+        self._rate_t0 = time.time()
+        self.measured_rate = 0.0
 
-    # Separate timestamps and counts
-    timestamps = np.array([s[0] for s in recorded_counts], dtype=np.int64)
-    counts = np.array([s[1] for s in recorded_counts], dtype=np.float64)
+    def start(self):
+        self.running = True
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
 
-    # Write CSV
-    with open(csv_path, "w", newline="") as fh:
-        fh.write("timestamp_us,channel_0\n")
-        for t, v in zip(timestamps, counts):
-            fh.write(f"{t},{int(v)}\n")
+    def _run(self):
+        line_buf = b""
+        while self.running:
+            try:
+                n = self.ser.in_waiting
+                chunk = self.ser.read(n or 1)
+            except Exception:
+                break
+            if not chunk:
+                continue
+            line_buf += chunk
+            while b"\n" in line_buf:
+                raw, line_buf = line_buf.split(b"\n", 1)
+                raw = raw.strip()
+                if not raw or raw[:1] in (b"#", b"-", b"["):
+                    continue
+                try:
+                    s = raw.decode("ascii", errors="ignore")
+                    comma = s.index(",")
+                    ts_us = int(s[:comma])
+                    ch0 = int(s[comma + 1:])
+                except Exception:
+                    continue
+                recv_t = time.time()
+                with self.lock:
+                    self.buf.append((recv_t, ts_us, ch0))
+                self._rate_n += 1
+            now = time.time()
+            if now - self._rate_t0 >= 1.0:
+                self.measured_rate = self._rate_n / (now - self._rate_t0)
+                self._rate_n = 0
+                self._rate_t0 = now
 
-    # Calculate actual sampling rate and timing jitter
-    jitter = {}
-    actual_rate = 0.0
-    if len(timestamps) >= 2:
-        dt = np.diff(timestamps.astype(float))
-        mean_dt = float(np.mean(dt))
-        actual_rate = 1e6 / mean_dt if mean_dt > 0 else 0.0
-        jitter = {
-            "dt_mean": round(mean_dt, 3),
-            "dt_std": round(float(np.std(dt)), 3),
-            "dt_min": round(float(np.min(dt)), 3),
-            "dt_max": round(float(np.max(dt)), 3),
-            "unit": "us",
-        }
+    def snapshot(self):
+        with self.lock:
+            return list(self.buf)
 
-    # Write Meta JSON
-    meta = {
-        "subject": subject,
-        "label": label,
-        "repetition": rep_num,
-        "timestamp": ts_str,
-        "n_samples": len(recorded_counts),
-        "duration_sec": len(recorded_counts) / FS_DEFAULT,
-        "configured_sampling_rate_hz": FS_DEFAULT,
-        "actual_sampling_rate_hz": round(actual_rate, 2),
-        "num_channels": 1,
-        "timestamp_unit": "us",
-        "timing_jitter": jitter,
-        "source": "plot_words.py (live GUI)",
-        "file": csv_path.name,
-    }
-    
-    with open(meta_path, "w") as f:
-        json.dump(meta, f, indent=2)
+    def window(self, t_start, t_end):
+        """All samples whose local receive time falls in [t_start, t_end]."""
+        with self.lock:
+            return [d for d in self.buf if t_start <= d[0] <= t_end]
 
-    print(f"Saved trial to: {csv_path.relative_to(REPO_ROOT)}")
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join(timeout=1.0)
+
 
 def counts_to_mv(counts):
-    return (counts * UV_PER_LSB) / 1000.0
+    return (np.asarray(counts, dtype=float) * UV_PER_LSB) / 1000.0
+
+
+def save_unverified(recorded, predicted_label, confidence):
+    """Save a live capture WITHOUT touching the trusted training set.
+
+    Trusted training data lives under datasets/custom_silent_speech/raw/ and
+    is only ever written by ml/acquisition/collect_emg.py (a deliberate,
+    ground-truth-labelled protocol). Auto-saving live GUI captures into that
+    tree under the model's OWN prediction would silently poison future
+    retraining with the model's mistakes. This writes to a separate
+    live_unverified/ tree instead, tagged with the predicted label and
+    confidence so a human can review and promote it later if it's correct.
+    """
+    label = predicted_label.lower()
+    out_dir = REPO_ROOT / "datasets" / "custom_silent_speech" / "live_unverified" / label
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ts_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base = f"pred_{label}_conf{int(confidence*100):02d}_{ts_str}"
+    csv_path = out_dir / f"{base}.csv"
+    meta_path = out_dir / f"{base}_meta.json"
+
+    with open(csv_path, "w", newline="") as fh:
+        fh.write("timestamp_us,channel_0\n")
+        for _, ts_us, ch0 in recorded:
+            fh.write(f"{ts_us},{int(ch0)}\n")
+
+    meta = {
+        "predicted_label": label,
+        "confidence": round(float(confidence), 4),
+        "n_samples": len(recorded),
+        "source": "plot_words.py v2 (live GUI, UNVERIFIED)",
+        "verified": False,
+        "note": "Not part of the trusted training set. Review and move into "
+                "datasets/custom_silent_speech/raw/<subject>/<label>/ manually if correct.",
+    }
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2)
+    print(f"Saved (unverified): {csv_path.relative_to(REPO_ROOT)}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Live EMG Word Plotter & OLED Alert")
     parser.add_argument("--port", help="COM port for ESP32 (e.g. COM8)")
-    parser.add_argument("--window", type=float, default=4.0, help="Live view time window in seconds")
+    parser.add_argument("--window", type=float, default=4.0, help="Plot time window in seconds")
+    parser.add_argument("--pre-roll", type=float, default=PRE_ROLL_SEC,
+                        help="Seconds captured BEFORE the keypress")
+    parser.add_argument("--post-roll", type=float, default=POST_ROLL_SEC,
+                        help="Seconds captured AFTER the keypress")
     args = parser.parse_args()
+    pre_roll, post_roll = args.pre_roll, args.post_roll
 
-    # 1. Load model artifacts
     clf_path = MODEL_DIR / "classifier.pkl"
     le_path = MODEL_DIR / "label_encoder.pkl"
-    
     if not (clf_path.exists() and le_path.exists()):
         print(f"ERROR: Model files not found in {MODEL_DIR}")
         print("Please train a model first using: python ml/refined/train_refined.py")
         sys.exit(1)
 
-    print("Loading refined SVM model...")
-    try:
-        clf = joblib.load(clf_path)
-        le = joblib.load(le_path)
-        classes = list(le.classes_)
-        print(f"Model loaded successfully! Vocabulary: {classes}")
-    except Exception as e:
-        print(f"ERROR loading model: {e}")
-        sys.exit(1)
+    print("Loading refined model...")
+    clf = joblib.load(clf_path)
+    le = joblib.load(le_path)
+    classes = list(le.classes_)
+    print(f"Model loaded. Vocabulary: {classes}")
 
-    # 2. Select port
     port = args.port
     if not port:
         ports = list(serial.tools.list_ports.comports())
         if not ports:
             print("ERROR: No serial ports found. Connect the ESP32.")
             sys.exit(1)
-        target_ports = [p.device for p in ports if "Silicon Labs" in (p.description or "")]
-        if target_ports:
-            port = target_ports[0]
-        else:
-            port = ports[0].device
+        target = [p.device for p in ports if "Silicon Labs" in (p.description or "")]
+        port = target[0] if target else ports[0].device
         print(f"Auto-selected port: {port}")
 
-    # 3. Open Serial
     print(f"Connecting to ESP32 on {port} at 921600 baud...")
     try:
-        ser = serial.Serial(port, 921600, timeout=1)
-        time.sleep(1.5)  # Wait for ESP32 reset
+        ser = serial.Serial(port, 921600, timeout=0)  # non-blocking; thread polls
+        time.sleep(1.5)
         ser.reset_input_buffer()
-        ser.write(b's')  # Start streaming
+        ser.write(b"s")
     except Exception as e:
         print(f"ERROR: {e}")
         print("Make sure no other serial monitor is using this port.")
         sys.exit(1)
 
-    # 4. Set up live data buffers
-    window_sec = args.window
-    buf_size = int(FS_DEFAULT * window_sec)
-    live_times = collections.deque([0.0] * buf_size, maxlen=buf_size)
-    live_values = collections.deque([0.0] * buf_size, maxlen=buf_size)
+    streamer = SerialStreamer(ser, maxlen_seconds=max(8, args.window + 4))
+    streamer.start()
 
-    # State variables for recording
+    # ---- state ----
     is_recording = False
-    rec_start_time = 0.0
-    recorded_counts = []
-    
-    # Prediction display state
-    pred_word = ""
-    pred_conf = 0.0
+    rec_trigger_t = 0.0
+    rec_deadline_t = 0.0
+    last_captured = None          # (recorded_list, pred_word, conf)
+
+    pred_word, pred_conf = "", 0.0
     pred_probs = [0.0] * len(classes)
     pred_show_until = 0.0
+    save_flash_until = 0.0
 
-    # 5. Build Matplotlib GUI
-    fig, (ax_raw, ax_probs) = plt.subplots(2, 1, figsize=(11, 7), 
-                                          gridspec_kw={'height_ratios': [3, 2]})
-    fig.canvas.manager.set_window_title("ASV — Real-Time Word Detector")
-    fig.patch.set_facecolor('#0a0a16')
-
-    # Apply styling to axes
+    # ---- GUI ----
+    fig, (ax_raw, ax_probs) = plt.subplots(2, 1, figsize=(11, 7),
+                                          gridspec_kw={"height_ratios": [3, 2]})
+    fig.canvas.manager.set_window_title("ASV — Real-Time Word Detector (v2)")
+    fig.patch.set_facecolor("#0a0a16")
     for ax in (ax_raw, ax_probs):
-        ax.set_facecolor('#0f0f22')
-        ax.tick_params(colors='#8888aa', labelsize=9)
-        for spine in ax.spines.values():
-            spine.set_color('#1c1c3c')
-            spine.set_linewidth(1.5)
+        ax.set_facecolor("#0f0f22")
+        ax.tick_params(colors="#8888aa", labelsize=9)
+        for sp in ax.spines.values():
+            sp.set_color("#1c1c3c"); sp.set_linewidth(1.5)
 
-    # Waveform Plot config
-    line_raw, = ax_raw.plot([], [], color='#00ffd2', linewidth=1.0, alpha=0.95, label='Live EMG (mV)')
-    ax_raw.set_ylabel('mV', color='#8888aa', fontsize=10)
-    ax_raw.set_xlabel('time (s)', color='#8888aa', fontsize=10)
-    ax_raw.set_xlim(0, window_sec)
+    line_raw, = ax_raw.plot([], [], color="#00ffd2", linewidth=1.0, alpha=0.95, label="Live EMG (mV)")
+    ax_raw.set_ylabel("mV", color="#8888aa", fontsize=10)
+    ax_raw.set_xlabel("time (s)", color="#8888aa", fontsize=10)
+    ax_raw.set_xlim(0, args.window)
     ax_raw.set_ylim(-200, 3500)
-    ax_raw.axhline(1635, color='#ff6b35', linewidth=0.8, linestyle='--', label='expected baseline ~1635mV')
-    ax_raw.legend(loc='upper right', facecolor='#0a0a16', edgecolor='#1c1c3c', labelcolor='#8888aa', fontsize=9)
-    ax_raw.grid(True, color='#181832', linewidth=0.5)
+    ax_raw.axhline(1635, color="#ff6b35", linewidth=0.8, linestyle="--", label="expected baseline ~1635mV")
+    ax_raw.legend(loc="upper right", facecolor="#0a0a16", edgecolor="#1c1c3c", labelcolor="#8888aa", fontsize=9)
+    ax_raw.grid(True, color="#181832", linewidth=0.5)
 
-    # Overlay texts on Raw plot
-    rec_banner = ax_raw.text(0.5, 0.90, '', transform=ax_raw.transAxes,
-                              color='#ff0055', fontsize=16, fontweight='bold', ha='center',
-                              bbox=dict(facecolor='#0a0a16', edgecolor='#ff0055', boxstyle='round,pad=0.4', alpha=0.85))
+    health_text = ax_raw.text(0.01, 0.95, "", transform=ax_raw.transAxes,
+                              color="#8888aa", fontsize=9, va="top", fontfamily="monospace")
+
+    rec_banner = ax_raw.text(0.5, 0.90, "", transform=ax_raw.transAxes,
+                             color="#ff0055", fontsize=16, fontweight="bold", ha="center",
+                             bbox=dict(facecolor="#0a0a16", edgecolor="#ff0055", boxstyle="round,pad=0.4", alpha=0.85))
     rec_banner.set_visible(False)
 
-    pred_banner = ax_raw.text(0.5, 0.45, '', transform=ax_raw.transAxes,
-                               color='#00ff66', fontsize=32, fontweight='bold', ha='center',
-                               bbox=dict(facecolor='#0a0a16', edgecolor='#00ff66', boxstyle='round,pad=0.6', alpha=0.9))
+    pred_banner = ax_raw.text(0.5, 0.45, "", transform=ax_raw.transAxes,
+                              color="#00ff66", fontsize=32, fontweight="bold", ha="center",
+                              bbox=dict(facecolor="#0a0a16", edgecolor="#00ff66", boxstyle="round,pad=0.6", alpha=0.9))
     pred_banner.set_visible(False)
 
-    # Horizontal Bar Chart for probabilities
+    save_banner = ax_raw.text(0.5, 0.08, "", transform=ax_raw.transAxes,
+                              color="#ffcc00", fontsize=11, fontweight="bold", ha="center")
+
     y_pos = np.arange(len(classes))
-    bars = ax_probs.barh(y_pos, pred_probs, align='center', color='#5a0099', height=0.6)
+    bars = ax_probs.barh(y_pos, pred_probs, align="center", color="#5a0099", height=0.6)
     ax_probs.set_yticks(y_pos)
-    ax_probs.set_yticklabels(classes, fontsize=10, color='#8888aa', fontweight='bold')
-    ax_probs.invert_yaxis()  # top-down list
-    ax_probs.set_xlabel('Probability', color='#8888aa', fontsize=10)
+    ax_probs.set_yticklabels(classes, fontsize=10, color="#8888aa", fontweight="bold")
+    ax_probs.invert_yaxis()
+    ax_probs.set_xlabel("Probability", color="#8888aa", fontsize=10)
     ax_probs.set_xlim(0, 1.0)
-    ax_probs.grid(True, axis='x', color='#181832', linewidth=0.5)
-    
-    # Instruction text
-    instruction_text = fig.text(0.5, 0.02, "Press [Spacebar] to record (2 seconds)  |  Press [Q] or close window to quit",
-                                transform=fig.transFigure, color='#8888aa', fontsize=10, ha='center', fontfamily='monospace')
+    ax_probs.grid(True, axis="x", color="#181832", linewidth=0.5)
 
-    # Serial parsing
-    t0 = None
-    line_buf = b''
-    last_stat_time = time.time()
-    sample_count = 0
-    measured_rate = 0.0
+    fig.text(0.5, 0.02,
+             "[SPACE] capture & classify   |   [S] save last capture (unverified)   |   [Q] quit",
+             transform=fig.transFigure, color="#8888aa", fontsize=10, ha="center", fontfamily="monospace")
 
-    def parse_serial():
-        nonlocal line_buf, t0, sample_count, measured_rate, last_stat_time
-        if ser.in_waiting == 0:
-            return
-        
-        chunk = ser.read(ser.in_waiting)
-        line_buf += chunk
-        
-        while b'\n' in line_buf:
-            raw, line_buf = line_buf.split(b'\n', 1)
-            raw = raw.strip()
-            
-            # Skip comments/metadata lines
-            if not raw or raw.startswith(b'#') or raw.startswith(b'-') or raw.startswith(b'['):
-                continue
-                
-            try:
-                parts = raw.decode('ascii', errors='ignore').split(',')
-                if len(parts) >= 2:
-                    ts_us = int(parts[0])
-                    ch0 = int(parts[1])
-                    
-                    if t0 is None:
-                        t0 = ts_us
-                        
-                    t_rel = (ts_us - t0) / 1e6
-                    mv = counts_to_mv(ch0)
-                    
-                    live_times.append(t_rel)
-                    live_values.append(mv)
-                    sample_count += 1
-                    
-                    if is_recording:
-                        recorded_counts.append((ts_us, ch0))
-            except Exception:
-                pass
-
-        # Update sample rate statistics
-        now = time.time()
-        elapsed = now - last_stat_time
-        if elapsed >= 1.0:
-            measured_rate = sample_count / elapsed
-            sample_count = 0
-            last_stat_time = now
-
-    # Key press handler
     def on_key(event):
-        nonlocal is_recording, rec_start_time, recorded_counts, pred_show_until
-        if event.key == ' ':
+        nonlocal is_recording, rec_trigger_t, rec_deadline_t, pred_show_until, save_flash_until
+        if event.key == " ":
             if not is_recording:
-                print("\nSpacebar pressed. Starting 2-second capture...")
-                recorded_counts = []
-                rec_start_time = time.time()
+                print("\n[SPACE] Capturing utterance...")
+                rec_trigger_t = time.time()
+                rec_deadline_t = rec_trigger_t + post_roll
                 is_recording = True
-                pred_show_until = 0.0  # Hide previous prediction
+                pred_show_until = 0.0
                 rec_banner.set_visible(True)
                 pred_banner.set_visible(False)
-        elif event.key in ('q', 'Q'):
+        elif event.key in ("s", "S"):
+            if last_captured is not None:
+                recorded, lw, lc = last_captured
+                save_unverified(recorded, lw, lc)
+                save_flash_until = time.time() + 2.0
+            else:
+                print("Nothing to save yet — capture a word first (SPACE).")
+        elif event.key in ("q", "Q"):
             plt.close()
 
-    fig.canvas.mpl_connect('key_press_event', on_key)
+    fig.canvas.mpl_connect("key_press_event", on_key)
 
-    # Animation update loop
     def update(frame):
-        nonlocal is_recording, pred_word, pred_conf, pred_probs, pred_show_until
-        
-        parse_serial()
-        now = time.time()
+        nonlocal is_recording, pred_word, pred_conf, pred_probs, pred_show_until, last_captured
 
-        # Handle recording completion
-        if is_recording and (now - rec_start_time >= 2.0):
+        now = time.time()
+        data = streamer.snapshot()
+
+        # finalize a capture once the post-roll deadline passes
+        if is_recording and now >= rec_deadline_t:
             is_recording = False
             rec_banner.set_visible(False)
-            print(f"Recording finished. Captured {len(recorded_counts)} samples.")
-            
-            if len(recorded_counts) >= 32:
-                # Extract counts for classification
-                counts = [s[1] for s in recorded_counts]
+            window = [d for d in data if (rec_trigger_t - pre_roll) <= d[0] <= rec_deadline_t]
+            print(f"Captured {len(window)} samples "
+                  f"(~{len(window)/FS_DEFAULT:.2f}s, expected ~{CAPTURE_SEC:.1f}s).")
+
+            if len(window) >= 32:
+                counts = [d[2] for d in window]
+                health = signal_health(counts)
                 x = extract(counts, fs=FS_DEFAULT).reshape(1, -1)
                 pred_word = le.inverse_transform(clf.predict(x))[0].upper()
-                
                 if hasattr(clf, "predict_proba"):
                     probs = clf.predict_proba(x)[0]
                     pred_probs = list(probs)
                     pred_conf = float(np.max(probs))
                 else:
-                    pred_probs = [0.0] * len(classes)
-                    # Set 1.0 for the predicted class, 0.0 for others
-                    pred_probs[classes.index(pred_word.lower())] = 1.0
+                    pred_probs = [1.0 if c.upper() == pred_word else 0.0 for c in classes]
                     pred_conf = 1.0
-                
-                print(f"Prediction: {pred_word} (confidence {pred_conf:.0%})")
-                
-                # Save the captured trial to the raw datasets folder
-                try:
-                    save_trial_to_disk(recorded_counts, pred_word)
-                except Exception as e:
-                    print(f"Error saving trial to disk: {e}")
-                
-                # Send predicted word over Serial to the ESP32 OLED
-                # Command format is 'w[WORD]\n'
+
+                warn = "" if health["ok"] else f"  [WARNING: {health['status']} — check electrodes]"
+                print(f"Prediction: {pred_word} (confidence {pred_conf:.0%}){warn}")
+                if not health["ok"]:
+                    print(f"  baseline={health['baseline_mv']}mV pp={health['pp_mv']}mV "
+                          f"(expect ~1635mV baseline, >3mV pp)")
+
+                last_captured = ([(0.0, ts, ch) for _, ts, ch in window], pred_word, pred_conf)
+
                 try:
                     ser.write(f"w{pred_word}\n".encode())
-                    print(f"Sent 'w{pred_word}\\n' to ESP32 OLED.")
                 except Exception as e:
-                    print(f"Warning: failed to send prediction to ESP32: {e}")
-                
-                pred_show_until = now + 4.0  # Display for 4 seconds
+                    print(f"Warning: failed to send prediction to ESP32 OLED: {e}")
+
+                pred_show_until = now + 4.0
             else:
-                print("Error: Capture too short to classify!")
+                print("Capture too short to classify (serial not connected / no data).")
 
-        # Update GUI elements
-        t_arr = np.array(live_times)
-        mv_arr = np.array(live_values)
+        # ---- draw waveform from the last `window` seconds of the buffer ----
+        if data:
+            t_end = data[-1][0]
+            t_start = t_end - args.window
+            recent = [d for d in data if d[0] >= t_start]
+            t_arr = np.array([d[0] - t_start for d in recent])
+            mv_arr = counts_to_mv([d[2] for d in recent])
+            line_raw.set_data(t_arr, mv_arr)
+            ax_raw.set_xlim(0, args.window)
+            if len(mv_arr) > 1:
+                baseline = float(np.mean(mv_arr[-int(FS_DEFAULT):]))
+                ptp = float(np.ptp(mv_arr[-int(FS_DEFAULT):]))
+                auto_min = max(-200, baseline - max(500, ptp * 1.3))
+                auto_max = baseline + max(500, ptp * 1.3)
+                ax_raw.set_ylim(auto_min, auto_max)
 
-        if len(mv_arr) > 1:
-            t_end = t_arr[-1]
-            t_start = max(t_end - window_sec, 0.0)
-            mask = t_arr >= t_start
-            
-            # Shift x axis relative to window start
-            line_raw.set_data(t_arr[mask] - t_start, mv_arr[mask])
-            ax_raw.set_xlim(0, window_sec)
-            
-            # Auto scale raw amplitude axis
-            baseline = np.mean(mv_arr[-buf_size:])
-            ptp = np.ptp(mv_arr[-buf_size:])
-            auto_min = max(-200, baseline - max(500, ptp * 1.3))
-            auto_max = baseline + max(500, ptp * 1.3)
-            ax_raw.set_ylim(auto_min, auto_max)
+                last_1s = [d[2] for d in data if d[0] >= t_end - 1.0]
+                health = signal_health(last_1s)
+                color = "#00ff66" if health["ok"] else "#ff3355"
+                status_msg = {"OK": "signal OK", "FLAT": "FLAT — check electrode contact",
+                             "RAILED_OR_OFFSET": "RAILED — check RL electrode placement",
+                             "NO_DATA": "no data"}[health["status"]]
+                health_text.set_text(
+                    f"rate={streamer.measured_rate:.0f} Hz  baseline={health['baseline_mv']:.0f} mV  "
+                    f"pp={health['pp_mv']:.1f} mV  [{status_msg}]")
+                health_text.set_color(color)
+        else:
+            health_text.set_text("waiting for data...")
 
-        # Pulsing recording text
         if is_recording:
-            elapsed_rec = now - rec_start_time
-            # Pulse text opacity or draw a countdown progress bar
-            rec_banner.set_text(f"● RECORDING — SPEAK NOW  ({2.0 - elapsed_rec:.1f}s)")
+            remaining = max(0.0, rec_deadline_t - now)
+            rec_banner.set_text(f"● CAPTURING — SPEAK NOW  ({remaining:.1f}s)")
 
-        # Show/Hide prediction overlay
         if now < pred_show_until:
             pred_banner.set_text(f"{pred_word}\n{pred_conf:.0%}")
             pred_banner.set_visible(True)
         else:
             pred_banner.set_visible(False)
 
-        # Update bar chart heights
+        save_banner.set_text("Saved (unverified) — press again after next capture" if now < save_flash_until else "")
+
         for i, bar in enumerate(bars):
             prob = pred_probs[i]
             bar.set_width(prob)
-            # Make the predicted bar cyan, and others purple
-            if classes[i].upper() == pred_word and now < pred_show_until:
-                bar.set_color('#00ffd2')
-            else:
-                bar.set_color('#5a0099')
+            bar.set_color("#00ffd2" if classes[i].upper() == pred_word and now < pred_show_until else "#5a0099")
 
-        ax_raw.set_title(f"Live Stream: {measured_rate:.0f} Hz  |  Baseline: {np.mean(mv_arr[-100:] if len(mv_arr) > 0 else 0):.0f} mV", 
-                         color='#dddddd', fontsize=11, fontweight='bold')
-        
-        return line_raw, rec_banner, pred_banner, bars
+        ax_raw.set_title("Live Stream", color="#dddddd", fontsize=11, fontweight="bold")
+        return line_raw, rec_banner, pred_banner, health_text, bars
 
-    # Run matplotlib animation
     ani = animation.FuncAnimation(fig, update, interval=40, blit=False, cache_frame_data=False)
     plt.tight_layout()
     plt.show()
 
-    # Cleanup on exit
-    print("\nClosing serial port...")
+    print("\nClosing...")
+    streamer.stop()
     try:
-        ser.write(b'x')  # Stop streaming
+        ser.write(b"x")
         ser.close()
-    except:
+    except Exception:
         pass
     print("Closed.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

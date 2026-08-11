@@ -26,6 +26,36 @@ from scipy import signal as sps
 FS_DEFAULT = 860.0
 UV_PER_LSB = 125.0          # gain index 1: +/-4.096 V
 
+# Signal-health thresholds — same numbers used to diagnose the railed-electrode
+# bug during dataset collection (see test.png / clench_test.png in project
+# history). Centralised here so every live tool (plot_words.py, predict_live.py,
+# the backend) agrees on what "good contact" means.
+BASELINE_TARGET_MV = 1635.0     # mid-supply (Vcc/2) at gain index 1
+BASELINE_TOLERANCE_MV = 700.0   # outside [935, 2335] mV -> railed / DC-offset fault
+MIN_HEALTHY_PP_MV = 3.0         # below this over ~1s -> flat / electrode not making contact
+
+
+def signal_health(counts, uv_per_lsb=UV_PER_LSB):
+    """Cheap pre-flight check on raw ADC counts: is this electrode contact usable?
+
+    Returns dict(baseline_mv, pp_mv, status, ok). status is one of
+    NO_DATA / RAILED_OR_OFFSET / FLAT / OK.
+    """
+    counts = np.asarray(counts, dtype=float)
+    if counts.size == 0:
+        return {"baseline_mv": 0.0, "pp_mv": 0.0, "status": "NO_DATA", "ok": False}
+    mv = counts * uv_per_lsb / 1000.0
+    baseline = float(np.mean(mv))
+    pp = float(np.ptp(mv))
+    if abs(baseline - BASELINE_TARGET_MV) > BASELINE_TOLERANCE_MV:
+        status = "RAILED_OR_OFFSET"
+    elif pp < MIN_HEALTHY_PP_MV:
+        status = "FLAT"
+    else:
+        status = "OK"
+    return {"baseline_mv": round(baseline, 1), "pp_mv": round(pp, 2),
+            "status": status, "ok": status == "OK"}
+
 # Ordered feature names — the model's schema depends on this order.
 FEATURE_NAMES = [
     "rms", "mav", "wl", "zcr", "ssc",
