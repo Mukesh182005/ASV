@@ -1,0 +1,34 @@
+{
+  "subject": "S01",
+  "label": "water",
+  "repetition": 24,
+  "timestamp": "20260920_191940",
+  "n_samples": 4306,
+  "duration_sec": 5.0,
+  "configured_sampling_rate_hz": 860,
+  "actual_sampling_rate_hz": 860.95,
+  "num_channels": 1,
+  "timestamp_unit": "us",
+  "timing_jitter": {
+    "dt_mean": 1161.504,
+    "dt_std": 3.888,
+    "dt_min": 1055.0,
+    "dt_max": 1268.0,
+    "unit": "us"
+  },
+  "firmware_header": {
+    "ts_unit": "us",
+    "channels": "1",
+    "fs": "860",
+    "uv_per_lsb": "125.0000",
+    "mode": "rdy_irq"
+  },
+  "is_simulated": false,
+  "serial_stats": {
+    "total_lines": 4306,
+    "valid_packets": 4306,
+    "malformed": 0
+  },
+  "source": "collect_emg.py",
+  "file": "rep024_20260920_191940.csv"
+}

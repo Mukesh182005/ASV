@@ -1,0 +1,230 @@
+{
+  "timestamp": "2026-08-10T21:33:12.949075",
+  "model": "TinyMyo",
+  "paper": "arXiv:2512.15729",
+  "pretrained_weights_loaded": false,
+  "device": "cpu",
+  "dataset": {
+    "n_windows": 435,
+    "n_trials": 63,
+    "n_hello_windows": 139,
+    "n_rest_windows": 296,
+    "n_hello_trials": 20,
+    "n_rest_trials": 43,
+    "window_shape": [
+      1,
+      1000
+    ]
+  },
+  "baseline": {
+    "experiment": "Conventional ML Baseline (RF/SVM)",
+    "accuracy": 0.916,
+    "precision": 0.8685,
+    "recall": 0.9654,
+    "f1": 0.9144,
+    "note": "GroupKFold CV, handcrafted features, RandomForest"
+  },
+  "experiments": {
+    "linear_probe": {
+      "experiment": "Linear Probe",
+      "accuracy": 0.7494,
+      "balanced_accuracy": 0.7205,
+      "precision": 0.6014,
+      "recall": 0.6403,
+      "f1": 0.6202,
+      "confusion_matrix": [
+        [
+          237,
+          59
+        ],
+        [
+          50,
+          89
+        ]
+      ],
+      "per_class": {
+        "rest": {
+          "precision": 0.8257839721254355,
+          "recall": 0.8006756756756757,
+          "f1-score": 0.8130360205831904,
+          "support": 296.0
+        },
+        "hello": {
+          "precision": 0.6013513513513513,
+          "recall": 0.6402877697841727,
+          "f1-score": 0.6202090592334495,
+          "support": 139.0
+        },
+        "accuracy": 0.7494252873563219,
+        "macro avg": {
+          "precision": 0.7135676617383935,
+          "recall": 0.7204817227299242,
+          "f1-score": 0.7166225399083199,
+          "support": 435.0
+        },
+        "weighted avg": {
+          "precision": 0.7540687208895788,
+          "recall": 0.7494252873563219,
+          "f1-score": 0.751420049025457,
+          "support": 435.0
+        }
+      }
+    },
+    "frozen_backbone_mlp": {
+      "experiment": "Frozen Backbone + MLP",
+      "accuracy": 0.7563,
+      "balanced_accuracy": 0.7103,
+      "precision": 0.6279,
+      "recall": 0.5827,
+      "f1": 0.6045,
+      "confusion_matrix": [
+        [
+          248,
+          48
+        ],
+        [
+          58,
+          81
+        ]
+      ],
+      "per_class": {
+        "rest": {
+          "precision": 0.8104575163398693,
+          "recall": 0.8378378378378378,
+          "f1-score": 0.8239202657807309,
+          "support": 296.0
+        },
+        "hello": {
+          "precision": 0.627906976744186,
+          "recall": 0.5827338129496403,
+          "f1-score": 0.6044776119402985,
+          "support": 139.0
+        },
+        "accuracy": 0.7563218390804598,
+        "macro avg": {
+          "precision": 0.7191822465420277,
+          "recall": 0.7102858253937391,
+          "f1-score": 0.7141989388605147,
+          "support": 435.0
+        },
+        "weighted avg": {
+          "precision": 0.7521252749518234,
+          "recall": 0.7563218390804598,
+          "f1-score": 0.7537995097259721,
+          "support": 435.0
+        }
+      }
+    },
+    "full_finetune": {
+      "experiment": "Full Fine-Tuning",
+      "accuracy": 0.7609,
+      "balanced_accuracy": 0.7366,
+      "precision": 0.6159,
+      "recall": 0.6691,
+      "f1": 0.6414,
+      "confusion_matrix": [
+        [
+          238,
+          58
+        ],
+        [
+          46,
+          93
+        ]
+      ],
+      "per_class": {
+        "rest": {
+          "precision": 0.8380281690140845,
+          "recall": 0.8040540540540541,
+          "f1-score": 0.8206896551724138,
+          "support": 296.0
+        },
+        "hello": {
+          "precision": 0.6158940397350994,
+          "recall": 0.6690647482014388,
+          "f1-score": 0.6413793103448275,
+          "support": 139.0
+        },
+        "accuracy": 0.7609195402298851,
+        "macro avg": {
+          "precision": 0.7269611043745919,
+          "recall": 0.7365594011277464,
+          "f1-score": 0.7310344827586206,
+          "support": 435.0
+        },
+        "weighted avg": {
+          "precision": 0.7670473782789606,
+          "recall": 0.7609195402298851,
+          "f1-score": 0.7633927863654378,
+          "support": 435.0
+        }
+      }
+    },
+    "random_init": {
+      "experiment": "Random Init (No Pretraining)",
+      "accuracy": 0.7678,
+      "balanced_accuracy": 0.7454,
+      "precision": 0.625,
+      "recall": 0.6835,
+      "f1": 0.6529,
+      "confusion_matrix": [
+        [
+          239,
+          57
+        ],
+        [
+          44,
+          95
+        ]
+      ],
+      "per_class": {
+        "rest": {
+          "precision": 0.8445229681978799,
+          "recall": 0.8074324324324325,
+          "f1-score": 0.8255613126079447,
+          "support": 296.0
+        },
+        "hello": {
+          "precision": 0.625,
+          "recall": 0.6834532374100719,
+          "f1-score": 0.6529209621993127,
+          "support": 139.0
+        },
+        "accuracy": 0.767816091954023,
+        "macro avg": {
+          "precision": 0.7347614840989399,
+          "recall": 0.7454428349212522,
+          "f1-score": 0.7392411374036287,
+          "support": 435.0
+        },
+        "weighted avg": {
+          "precision": 0.7743765484748792,
+          "recall": 0.767816091954023,
+          "f1-score": 0.7703957753509336,
+          "support": 435.0
+        }
+      }
+    }
+  },
+  "inference_latency": {
+    "avg_ms": 2.61,
+    "std_ms": 0.2
+  },
+  "model_parameters": {
+    "total": 549634,
+    "trainable": 549634,
+    "frozen": 0,
+    "backbone": 532864,
+    "head": 16770
+  },
+  "model_size_mb": 2.1,
+  "cv_method": "GroupKFold",
+  "cv_splits": 5,
+  "leakage_prevention": "Trial-level splits \u2014 all windows from one trial in same fold",
+  "compatibility_notes": {
+    "sampling_rate": "Resampled 475 Hz \u2192 2000 Hz (interpolation, no new information)",
+    "channels": "1 channel (model designed for 16, channel-independent tokenization allows 1)",
+    "window_size": "1000 samples at 2kHz = 500ms",
+    "limitation": "Single channel means no cross-channel spatial information available"
+  }
+}

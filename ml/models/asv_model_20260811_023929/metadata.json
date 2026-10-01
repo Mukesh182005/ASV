@@ -1,0 +1,24 @@
+{
+  "model_type": "RandomForest",
+  "training_timestamp": "20260811_023929",
+  "labels": [
+    "hello",
+    "help",
+    "no",
+    "rest",
+    "yes"
+  ],
+  "feature_version": 1,
+  "preprocessing_version": 1,
+  "sampling_rate_hz": 860,
+  "window_size": 220,
+  "window_step": 110,
+  "num_channels": 1,
+  "training_subjects": [
+    "S01"
+  ],
+  "n_recordings": 50,
+  "n_windows": 700,
+  "n_features": 9,
+  "single_subject_warning": true
+}

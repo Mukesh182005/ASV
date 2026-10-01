@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "feature_names": [
+    "MAV_ch0",
+    "MEDF_ch0",
+    "MF_ch0",
+    "RMS_ch0",
+    "SSC_ch0",
+    "STD_ch0",
+    "VAR_ch0",
+    "WL_ch0",
+    "ZCR_ch0"
+  ],
+  "n_features": 9
+}

@@ -1,0 +1,25 @@
+venv/
+node_modules/
+__pycache__/
+.env
+*.pyc
+.DS_Store
+firmware/.pio/
+.pytest_cache/
+firmware_arduino/.build/
+*.csv
+*.png
+
+# NinaPro DB1 stays out: 3.2 GB, and it is forearm/hand gesture EMG that cannot
+# transfer to jaw articulation. It is not used by anything.
+datasets/ninapro_db1/
+
+# The collected jaw-EMG dataset IS tracked, deliberately. It is ~12 MB and it is
+# the only copy of many hours of recording -- a clone has to arrive with the
+# recordings or the next person starts from scratch. These negations are needed
+# because *.csv above would otherwise swallow them.
+!datasets/custom_silent_speech/**/*.csv
+!datasets/custom_silent_speech/**/*.json
+
+# Model evaluation plots are part of the deliverable, not build noise.
+!refined_model/*.png

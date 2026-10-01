@@ -1,0 +1,34 @@
+{
+  "subject": "S01",
+  "label": "hello",
+  "repetition": 32,
+  "timestamp": "20260927_194608",
+  "n_samples": 4304,
+  "duration_sec": 5.0,
+  "configured_sampling_rate_hz": 860,
+  "actual_sampling_rate_hz": 860.53,
+  "num_channels": 1,
+  "timestamp_unit": "us",
+  "timing_jitter": {
+    "dt_mean": 1162.078,
+    "dt_std": 35.609,
+    "dt_min": 1055.0,
+    "dt_max": 3486.0,
+    "unit": "us"
+  },
+  "firmware_header": {
+    "ts_unit": "us",
+    "channels": "1",
+    "fs": "860",
+    "uv_per_lsb": "125.0000",
+    "mode": "rdy_irq"
+  },
+  "is_simulated": false,
+  "serial_stats": {
+    "total_lines": 4305,
+    "valid_packets": 4304,
+    "malformed": 1
+  },
+  "source": "collect_emg.py",
+  "file": "rep032_20260927_194608.csv"
+}

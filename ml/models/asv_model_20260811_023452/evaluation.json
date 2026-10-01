@@ -1,0 +1,114 @@
+{
+  "best_model": "RandomForest",
+  "cv_accuracy": 0.0,
+  "cv_n_splits": 5,
+  "cv_method": "GroupKFold",
+  "all_models": {
+    "RandomForest": {
+      "cv_accuracy": 0.0,
+      "fold_scores": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "SVM": {
+      "cv_accuracy": 0.0,
+      "fold_scores": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "train_weighted_precision": 1.0,
+  "train_weighted_recall": 1.0,
+  "train_weighted_f1": 1.0,
+  "confusion_matrix": [
+    [
+      140,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      140,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      140,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      140,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      140
+    ]
+  ],
+  "classification_report": {
+    "hello": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "help": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "no": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "rest": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "yes": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 140.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 700.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 700.0
+    }
+  },
+  "note": "Metrics on full training data after cross-validation. Evaluate on held-out subjects for true generalization."
+}

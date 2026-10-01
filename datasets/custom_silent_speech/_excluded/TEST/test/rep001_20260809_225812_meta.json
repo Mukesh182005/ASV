@@ -1,0 +1,19 @@
+{
+  "subject": "TEST",
+  "label": "test",
+  "repetition": 1,
+  "timestamp": "20260809_225812",
+  "n_samples": 1485,
+  "duration_sec": 5.0,
+  "configured_sampling_rate_hz": 500,
+  "actual_sampling_rate_hz": 365.79,
+  "num_channels": 1,
+  "is_simulated": false,
+  "serial_stats": {
+    "total_lines": 1486,
+    "valid_packets": 1485,
+    "malformed": 0
+  },
+  "source": "collect_emg.py",
+  "file": "rep001_20260809_225812.csv"
+}

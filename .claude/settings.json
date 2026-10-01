@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "Copy this to .claude/settings.json in the repo root. Scopes auto-approved commands to the ASV toolchain so the agent can iterate on the firmware without prompting on every call, while still requiring approval for anything outside it.",
+  "permissions": {
+    "allow": [
+      "Bash(./tools/asv.ps1:*)",
+      "Bash(pwsh ./tools/asv.ps1:*)",
+      "Bash(powershell ./tools/asv.ps1:*)",
+      "Bash(arduino-cli compile:*)",
+      "Bash(arduino-cli upload:*)",
+      "Bash(arduino-cli board list:*)",
+      "Bash(arduino-cli core list:*)",
+      "Bash(arduino-cli lib list:*)",
+      "Bash(arduino-cli version:*)",
+      "Bash(python tools/asv_serial.py:*)",
+      "Bash(python ml/acquisition/validate_dataset.py:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [
+      "Bash(arduino-cli core uninstall:*)",
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Read(./datasets/ninapro_db1/**)"
+    ]
+  }
+}

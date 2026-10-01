@@ -1,0 +1,130 @@
+{
+  "best_model": "ExtraTrees",
+  "evaluation_method": "Leave-One-Recording-Out (out-of-fold) + Repeated 5-fold x10",
+  "loo_accuracy": 0.664,
+  "repeated5fold_mean": 0.6636,
+  "repeated5fold_std": 0.0524,
+  "all_models": {
+    "LDA": {
+      "loo_accuracy": 0.64,
+      "repeated5fold_mean": 0.6308,
+      "repeated5fold_std": 0.0431,
+      "out_of_session": 0.63
+    },
+    "SVM_linear": {
+      "loo_accuracy": 0.664,
+      "repeated5fold_mean": 0.6516,
+      "repeated5fold_std": 0.0453,
+      "out_of_session": 0.655
+    },
+    "SVM_rbf": {
+      "loo_accuracy": 0.672,
+      "repeated5fold_mean": 0.6628,
+      "repeated5fold_std": 0.0478,
+      "out_of_session": 0.635
+    },
+    "RandomForest": {
+      "loo_accuracy": 0.668,
+      "repeated5fold_mean": 0.6768,
+      "repeated5fold_std": 0.0553,
+      "out_of_session": 0.65
+    },
+    "ExtraTrees": {
+      "loo_accuracy": 0.664,
+      "repeated5fold_mean": 0.6636,
+      "repeated5fold_std": 0.0524,
+      "out_of_session": 0.67
+    }
+  },
+  "confusion_matrix": [
+    [
+      34,
+      3,
+      8,
+      0,
+      5
+    ],
+    [
+      7,
+      34,
+      2,
+      0,
+      7
+    ],
+    [
+      6,
+      3,
+      24,
+      2,
+      15
+    ],
+    [
+      1,
+      0,
+      2,
+      47,
+      0
+    ],
+    [
+      7,
+      5,
+      11,
+      0,
+      27
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "help",
+    "hi",
+    "no",
+    "rest",
+    "yes"
+  ],
+  "classification_report": {
+    "help": {
+      "precision": 0.6181818181818182,
+      "recall": 0.68,
+      "f1-score": 0.6476190476190476,
+      "support": 50.0
+    },
+    "hi": {
+      "precision": 0.7555555555555555,
+      "recall": 0.68,
+      "f1-score": 0.7157894736842105,
+      "support": 50.0
+    },
+    "no": {
+      "precision": 0.5106382978723404,
+      "recall": 0.48,
+      "f1-score": 0.4948453608247423,
+      "support": 50.0
+    },
+    "rest": {
+      "precision": 0.9591836734693877,
+      "recall": 0.94,
+      "f1-score": 0.9494949494949495,
+      "support": 50.0
+    },
+    "yes": {
+      "precision": 0.5,
+      "recall": 0.54,
+      "f1-score": 0.5192307692307693,
+      "support": 50.0
+    },
+    "accuracy": 0.664,
+    "macro avg": {
+      "precision": 0.6687118690158204,
+      "recall": 0.664,
+      "f1-score": 0.6653959201707438,
+      "support": 250.0
+    },
+    "weighted avg": {
+      "precision": 0.6687118690158204,
+      "recall": 0.664,
+      "f1-score": 0.6653959201707437,
+      "support": 250.0
+    }
+  },
+  "chance_level": 0.2,
+  "note": "All metrics are out-of-fold. No sample was scored by a model that trained on it."
+}

@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400;1,8..60,600&display=swap');
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+:root {
+  --bg: #FFFFFF;
+  --bg2: #F5F5F5;
+  --bg3: #EBEBEB;
+  --border: rgba(0, 0, 0, 0.15);
+  --border-dark: #000000;
+  --accent: #000000;
+  --text: #000000;
+  --dim: #525252;
+  --r: 0px;
+
+  --font-hero: 'Playfair Display', Georgia, serif;
+  --font-body: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --background: #FFFFFF;
+  --foreground: #000000;
+  --card: rgba(255, 255, 255, 0.85);
+  --card-foreground: #000000;
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F5F5;
+  --secondary-foreground: #000000;
+  --muted: #F5F5F5;
+  --muted-foreground: #525252;
+  --accent-color: #000000;
+  --accent-foreground: #FFFFFF;
+  --destructive: #000000;
+  --destructive-foreground: #FFFFFF;
+  --input-border: #000000;
+  --ring-color: #000000;
+  --radius: 0px;
+}
+
+/* Strict Zero Radius Rule */
+*, *::before, *::after {
+  border-radius: 0 !important;
+}
+
+/* CRT Horizontal Scanline Texture Effect */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.025) 1px,
+    rgba(0, 0, 0, 0.025) 2px
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+}
+
+/* Typography Classes */
+.font-hero {
+  font-family: var(--font-hero);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Hero Title SPEC */
+.hero-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(48px, 10vw, 76px);
+  font-weight: 800;
+  color: #000000;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+}
+
+.hero-title .line2 {
+  font-style: italic;
+  display: block;
+}
+
+/* Hardware & Image Grayscale Filter */
+img, svg.grayscale-icon {
+  filter: grayscale(100%);
+}
+
+/* Quick Nav Grid Cards (#quickNavGrid) */
+.quick-nav-card {
+  background-color: #FFFFFF;
+  border: 1.5px solid #000000;
+  padding: 16px 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+
+.quick-nav-card:hover, .quick-nav-card:active {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.quick-nav-card:hover *, .quick-nav-card:active * {
+  color: #FFFFFF !important;
+}
+
+/* Brutalist Buttons */
+.btn-primary {
+  background-color: #000000;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  border: 2px solid #000000;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: #000000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  border: 1.5px solid #000000;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ghost:hover {
+  background-color: #F5F5F5;
+}
+
+/* Tag Badges */
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #000000;
+  padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #000000;
+  background-color: #FFFFFF;
+}
+
+/* Live Blink Animation */
+@keyframes liveblink {
+  0%, 100% { opacity: 1.0; }
+  50%      { opacity: 0.2; }
+}
+
+.animate-liveblink {
+  animation: liveblink 1.6s ease-in-out infinite;
+}
+
+/* Fade Up Entrance */
+@keyframes fadeup {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeup {
+  animation: fadeup 0.3s ease forwards;
+}
+
+@layer base {
+  body {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: var(--font-body);
+    overflow: hidden;
+    
+    /* Universal Light Editorial Background Grid on body */
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "asv-frontend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set PATH=C:\\Program Files\\nodejs;%PATH% && npm --prefix C:\\Users\\sagar\\ASV\\frontend run dev"
+      ],
+      "port": 3000
+    }
+  ]
+}

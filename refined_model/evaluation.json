@@ -1,0 +1,124 @@
+{
+  "best_model": "LDA",
+  "evaluation_method": "Leave-One-Recording-Out (out-of-fold) + Repeated 5-fold x10",
+  "loo_accuracy": 0.7015,
+  "repeated5fold_mean": 0.7095,
+  "repeated5fold_std": 0.1147,
+  "all_models": {
+    "ExtraTrees": {
+      "loo_accuracy": 0.7612,
+      "repeated5fold_mean": 0.7782,
+      "repeated5fold_std": 0.0891,
+      "out_of_session": 0.2373
+    },
+    "RandomForest": {
+      "loo_accuracy": 0.7612,
+      "repeated5fold_mean": 0.7441,
+      "repeated5fold_std": 0.0945,
+      "out_of_session": 0.2542
+    },
+    "SVM_rbf": {
+      "loo_accuracy": 0.7612,
+      "repeated5fold_mean": 0.7453,
+      "repeated5fold_std": 0.1029,
+      "out_of_session": 0.2373
+    },
+    "LDA": {
+      "loo_accuracy": 0.7015,
+      "repeated5fold_mean": 0.7095,
+      "repeated5fold_std": 0.1147,
+      "out_of_session": 0.3051
+    }
+  },
+  "confusion_matrix": [
+    [
+      6,
+      3,
+      0,
+      3,
+      0
+    ],
+    [
+      0,
+      12,
+      0,
+      0,
+      7
+    ],
+    [
+      0,
+      0,
+      13,
+      0,
+      1
+    ],
+    [
+      3,
+      0,
+      0,
+      6,
+      1
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      10
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "hello",
+    "help",
+    "rest",
+    "water",
+    "yes"
+  ],
+  "classification_report": {
+    "hello": {
+      "precision": 0.6666666666666666,
+      "recall": 0.5,
+      "f1-score": 0.5714285714285714,
+      "support": 12.0
+    },
+    "help": {
+      "precision": 0.7058823529411765,
+      "recall": 0.631578947368421,
+      "f1-score": 0.6666666666666666,
+      "support": 19.0
+    },
+    "rest": {
+      "precision": 1.0,
+      "recall": 0.9285714285714286,
+      "f1-score": 0.9629629629629629,
+      "support": 14.0
+    },
+    "water": {
+      "precision": 0.6666666666666666,
+      "recall": 0.6,
+      "f1-score": 0.631578947368421,
+      "support": 10.0
+    },
+    "yes": {
+      "precision": 0.5263157894736842,
+      "recall": 0.8333333333333334,
+      "f1-score": 0.6451612903225806,
+      "support": 12.0
+    },
+    "accuracy": 0.7014925373134329,
+    "macro avg": {
+      "precision": 0.7131062951496387,
+      "recall": 0.6986967418546366,
+      "f1-score": 0.6955596877498406,
+      "support": 67.0
+    },
+    "weighted avg": {
+      "precision": 0.7223018036751229,
+      "recall": 0.7014925373134329,
+      "f1-score": 0.702433074072331,
+      "support": 67.0
+    }
+  },
+  "chance_level": 0.2,
+  "note": "All metrics are out-of-fold. No sample was scored by a model that trained on it."
+}
